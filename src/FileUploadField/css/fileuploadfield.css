@@ -5,11 +5,18 @@
  * http://www.extjs.com/license
  */
 /*
+ * Modications made to the Ext provided Ext.ux.form.FileUploadField.
+ * Changes between CHANGE and END CHANGE were made from the original.
+ */
+/*
  * FileUploadField component styles
  */
 .x-form-file-wrap {
     position: relative;
     height: 22px;
+	/* CHANGE */
+	overflow : hidden;
+	/* END CHANGE */
 }
 .x-form-file-wrap .x-form-file {
 	position: absolute;

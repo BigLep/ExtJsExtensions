@@ -4,6 +4,10 @@
  * licensing@extjs.com
  * http://www.extjs.com/license
  */
+/*
+ * Modications made to the Ext provided Ext.ux.form.FileUploadField.
+ * Changes between CHANGE and END CHANGE were made from the original.
+ */
 Ext.ns('Ext.ux.form');
 
 /**
@@ -63,26 +67,46 @@ Ext.ux.form.FileUploadField = Ext.extend(Ext.form.TextField,  {
         Ext.ux.form.FileUploadField.superclass.onRender.call(this, ct, position);
 
         this.wrap = this.el.wrap({cls:'x-form-field-wrap x-form-file-wrap'});
+        // CHANGE
+        this.wrap.on({
+            'mousemove': this.onButtonMouseMove,
+            'mouseover': this.onButtonMouseMove,
+            scope: this
+        });
+        // END CHANGE
         this.el.addClass('x-form-file-text');
         this.el.dom.removeAttribute('name');
-        this.createFileInput();
+        
 
         var btnCfg = Ext.applyIf(this.buttonCfg || {}, {
             text: this.buttonText
         });
         this.button = new Ext.Button(Ext.apply(btnCfg, {
             renderTo: this.wrap,
-            cls: 'x-form-file-btn' + (btnCfg.iconCls ? ' x-btn-icon' : '')
+            // CHANGE
+            // cls: 'x-form-file-btn' + (btnCfg.iconCls ? ' x-btn-icon' : '')
+            // http://www.extjs.com/forum/showthread.php?t=82344
+            cls: 'x-form-file-btn'
+            // END CHANGE
         }));
-
+        
+        // CHANGE
+        // Moved this below to guarantee the button has already been instantiated.
+        this.createFileInput();
+        // END CHANGE
+        
         if(this.buttonOnly){
             this.el.hide();
             this.wrap.setWidth(this.button.getEl().getWidth());
         }
 
-        this.bindListeners();
+        // CHANGE
+        //this.bindListeners();
+        // END CHANGE
         this.resizeEl = this.positionEl = this.wrap;
     },
+    
+    
     
     bindListeners: function(){
         this.fileInput.on({
@@ -109,13 +133,28 @@ Ext.ux.form.FileUploadField = Ext.extend(Ext.form.TextField,  {
     
     createFileInput : function() {
         this.fileInput = this.wrap.createChild({
-            id: this.getFileInputId(),
+            // CHANGE
+            // id: this.getFileInputId(),
+            // END CHANGE
             name: this.name||this.getId(),
             cls: 'x-form-file',
             tag: 'input',
             type: 'file',
             size: 1
         });
+        
+        // CHANGE
+        if (this.button.tooltip) {
+            if(Ext.isObject(this.button.tooltip)){
+                Ext.QuickTips.register(Ext.apply({
+                      target: this.fileInput
+                }, this.button.tooltip));
+            }else{
+                this.fileInput.dom[this.button.tooltipType] = this.button.tooltip;
+            }
+        }
+        this.bindListeners();
+        // END CHANGE
     },
     
     reset : function(){
@@ -165,14 +204,53 @@ Ext.ux.form.FileUploadField = Ext.extend(Ext.form.TextField,  {
         this.button.setDisabled(disabled);
     },
 
-
     // private
     preFocus : Ext.emptyFn,
 
     // private
     alignErrorIcon : function(){
         this.errorIcon.alignTo(this.wrap, 'tl-tr', [2, 0]);
+    },
+    
+    // CHANGE
+    /**
+     * Handler when the cursor moves over the wrap.
+     * The fileInput gets positioned to guarantee the cursor is over the "Browse" button.
+     * @param {Event} e mouse event.
+     * @private
+     */
+    onButtonMouseMove: function(e){
+        var right = this.wrap.getRight() - e.getPageX() - 10;
+        var top = e.getPageY() - this.wrap.getY() - 10;
+        this.fileInput.setRight(right);
+        this.fileInput.setTop(top);
+        this.button.addClass(['x-btn-over','x-btn-focus']);
+    },
+    
+    /**
+     * Detaches the input file associated with this FileUploadField so that it can be used for other purposes (e.g., uplaoding).
+     * The returned input file has all listeners and tooltips that were applied to it by this class removed.
+     * @param {Boolean} whether to create a new input file element for this BrowseButton after detaching.
+     * True will prevent creation.  Defaults to false.
+     * @return {Ext.Element} the detached input file element.
+     */
+    detachFileInput : function(noCreate){
+        var result = this.fileInput;
+        
+        if (Ext.isObject(this.button.tooltip)) {
+            Ext.QuickTips.unregister(this.fileInput);
+        } else {
+            this.fileInput.dom[this.button.tooltipType] = null;
+        }
+        this.fileInput.removeAllListeners();
+        this.fileInput = null;
+        
+        if (!noCreate) {
+            this.createFileInput();
+        }
+        return result;
     }
+    // END CHANGE
 
 });
 
